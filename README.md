@@ -10,28 +10,70 @@ We highly recommend exploring our documentation before using this Kernel Extensi
 - [Compatibility](https://openintelwireless.github.io/itlwm/Compat)
 - [FAQ](https://openintelwireless.github.io/itlwm/FAQ)
 
-## AirportItlwm on macOS 26
+## AirportItlwm no macOS 26 Tahoe
 
-This fork supports macOS Tahoe 26.x (x86_64) through the native Wi-Fi interface,
-including scanning, connecting, network switching, and private Wi-Fi addresses.
+Este fork oferece suporte experimental ao macOS Tahoe 26.x em computadores
+`x86_64`, usando a interface Wi-Fi nativa do macOS.
 
-- **Wi-Fi 6 (802.11ax / HE) is disabled by default.**
-  Add `itlwm_he=1` to enable it on supported adapters.
-- WPA2-Personal and WPA2/WPA3 transition networks with optional PMF are supported.
-  WPA3-only, mandatory PMF, AWDL / AirDrop, and MLO are not supported.
-- Device support follows the upstream hardware table; Tahoe compatibility still
-  requires validation on each adapter.
+- O Wi-Fi 6 (802.11ax/HE) vem desativado por padrão. Adicione `itlwm_he=1` aos
+  argumentos de inicialização para ativá-lo em adaptadores compatíveis.
+- WPA2-Personal e redes de transição WPA2/WPA3 com PMF opcional são suportadas.
+- WPA3 exclusivo, PMF obrigatório, AWDL/AirDrop e MLO não são suportados.
+- A compatibilidade depende do adaptador Intel utilizado e ainda pode exigir
+  testes específicos no Tahoe.
 
-Download Tahoe **Release** or **Debug** builds from [this fork's Releases](https://github.com/laobamac/itlwm/releases).
-CI builds only Tahoe and updates the alpha release after checks pass on `main`.
+### Baixar a versão compilada
 
-To build locally, install Xcode and Python 3, and check out MacKernelSDK commit
-`3f750085caa17ec3a7880f11c11bf4f48cd6a164` in `MacKernelSDK/`:
+Baixe o arquivo ZIP mais recente na página de
+[Releases deste fork](https://github.com/maxpicelli/itlwm/releases). Extraia o
+ZIP antes de adicionar `AirportItlwm.kext` à pasta `EFI/OC/Kexts`.
+
+### Compilar localmente
+
+#### Pré-requisitos
+
+- macOS com processador Intel (`x86_64`);
+- Xcode instalado pela App Store;
+- ferramentas de linha de comando do Xcode;
+- Git e Python 3.
+
+Instale as ferramentas de linha de comando, caso ainda não estejam presentes:
+
+```sh
+xcode-select --install
+```
+
+Clone este fork e entre na pasta do projeto:
+
+```sh
+git clone https://github.com/maxpicelli/itlwm.git
+cd itlwm
+```
+
+Baixe o MacKernelSDK dentro da raiz do projeto e selecione exatamente a revisão
+utilizada por esta versão:
+
+```sh
+git clone https://github.com/acidanthera/MacKernelSDK.git MacKernelSDK
+git -C MacKernelSDK checkout 3f750085caa17ec3a7880f11c11bf4f48cd6a164
+```
+
+Compile o AirportItlwm para o macOS Tahoe em modo Release:
 
 ```sh
 xcodebuild -project itlwm.xcodeproj -scheme AirportItlwm-Tahoe \
   -configuration Release ARCHS=x86_64 CODE_SIGNING_ALLOWED=NO build
 ```
+
+Ao final, procure por `** BUILD SUCCEEDED **`. O arquivo gerado estará em uma
+pasta semelhante a:
+
+```text
+~/Library/Developer/Xcode/DerivedData/itlwm-*/Build/Products/Release/Tahoe/AirportItlwm.kext
+```
+
+O `MacKernelSDK` é necessário somente para compilar e já está listado no
+`.gitignore`, portanto não será incluído nos commits do projeto.
 
 ## Download
 
