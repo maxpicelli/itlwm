@@ -28,9 +28,29 @@ Baixe o arquivo ZIP mais recente na página de
 [Releases deste fork](https://github.com/maxpicelli/itlwm/releases). Extraia o
 ZIP antes de adicionar `AirportItlwm.kext` à pasta `EFI/OC/Kexts`.
 
-### Compilar localmente
+### Comandos por dois cliques
 
-#### Pré-requisitos
+Os arquivos `.command` da pasta `scripts` podem ser executados com dois cliques
+pelo Finder. O macOS abrirá o Terminal e executará o processo automaticamente.
+Se o sistema bloquear o arquivo na primeira execução, clique nele com o botão
+direito e selecione **Abrir**.
+
+#### Atualizar o fork
+
+Abra `scripts/update_fork.command` para buscar as atualizações do projeto
+original, mesclá-las na branch `main` local e enviá-las para o seu fork no
+GitHub. Antes de executar, confirme que está na branch `main` e que não existem
+alterações rastreadas aguardando commit.
+
+Pelo Terminal, o comando equivalente é:
+
+```sh
+./scripts/update_fork.command
+```
+
+#### Criar a release localmente
+
+Pré-requisitos:
 
 - macOS com processador Intel (`x86_64`);
 - Xcode instalado pela App Store;
@@ -58,7 +78,28 @@ git clone https://github.com/acidanthera/MacKernelSDK.git MacKernelSDK
 git -C MacKernelSDK checkout 3f750085caa17ec3a7880f11c11bf4f48cd6a164
 ```
 
-Compile o AirportItlwm para o macOS Tahoe em modo Release:
+Abra `scripts/criar_release.command` para compilar o AirportItlwm para o macOS
+Tahoe em modo Release. O script cria o ZIP na pasta `artifacts` e abre o Finder
+mostrando o arquivo pronto.
+
+Pelo Terminal, o comando equivalente é:
+
+```sh
+./scripts/criar_release.command
+```
+
+O ZIP terá um nome semelhante a:
+
+```text
+AirportItlwm-Tahoe-v2.4.0-RELEASE-ptbr-29a693c.zip
+```
+
+O `MacKernelSDK` e a pasta `artifacts` estão no `.gitignore`, portanto não serão
+incluídos acidentalmente nos commits.
+
+### Compilação manual
+
+Como alternativa ao script, compile pelo Terminal:
 
 ```sh
 xcodebuild -project itlwm.xcodeproj -scheme AirportItlwm-Tahoe \
@@ -71,9 +112,6 @@ pasta semelhante a:
 ```text
 ~/Library/Developer/Xcode/DerivedData/itlwm-*/Build/Products/Release/Tahoe/AirportItlwm.kext
 ```
-
-O `MacKernelSDK` é necessário somente para compilar e já está listado no
-`.gitignore`, portanto não será incluído nos commits do projeto.
 
 ## Download
 
