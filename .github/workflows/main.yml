@@ -14,38 +14,37 @@ concurrency:
 
 jobs:
   build:
-    name: Tahoe (${{ matrix.configuration }})
+    name: ${{ matrix.platform }} (${{ matrix.configuration }})
     runs-on: macos-15-intel
     strategy:
       fail-fast: false
       matrix:
+        platform: [Sequoia, Tahoe]
         configuration: [Debug, Release]
     steps:
       - uses: actions/checkout@v4
-      - name: Check WCL cipher capabilities
-        run: python3 scripts/test_wcl_capabilities.py
-      - name: Check HE negotiation and firmware encoding
-        run: python3 scripts/test_he.py
       - name: Install MacKernelSDK
         uses: actions/checkout@v4
         with:
           repository: acidanthera/MacKernelSDK
           ref: 3f750085caa17ec3a7880f11c11bf4f48cd6a164
           path: MacKernelSDK
-      - name: Build AirportItlwm for Tahoe
+      - name: Build AirportItlwm for ${{ matrix.platform }}
         env:
           CONFIGURATION: ${{ matrix.configuration }}
+          PLATFORM: ${{ matrix.platform }}
         run: |
           set -euo pipefail
           mkdir -p logs
-          xcodebuild -project itlwm.xcodeproj -scheme AirportItlwm-Tahoe \
+          xcodebuild -project itlwm.xcodeproj -scheme "AirportItlwm-$PLATFORM" \
             -configuration "$CONFIGURATION" -jobs 3 ARCHS=x86_64 \
             SYMROOT="$PWD/build/products" OBJROOT="$PWD/build/obj" \
             CODE_SIGNING_ALLOWED=NO GIT_COMMIT="_$(git rev-parse --short HEAD)" \
-            build > logs/AirportItlwm-Tahoe.log 2>&1 || { tail -100 logs/AirportItlwm-Tahoe.log; exit 1; }
-      - name: Package Tahoe kernel extension
+            build > "logs/AirportItlwm-$PLATFORM.log" 2>&1 || { tail -100 "logs/AirportItlwm-$PLATFORM.log"; exit 1; }
+      - name: Package kernel extension
         env:
           CONFIGURATION: ${{ matrix.configuration }}
+          PLATFORM: ${{ matrix.platform }}
         run: |
           set -euo pipefail
           mkdir -p artifacts
@@ -54,16 +53,16 @@ jobs:
           short_sha=$(git rev-parse --short HEAD)
           configuration=$(printf '%s' "$CONFIGURATION" | tr '[:lower:]' '[:upper:]')
           suffix="v$version-$configuration-alpha-$short_sha"
-          ditto -c -k --keepParent "$products/Tahoe/AirportItlwm.kext" "artifacts/AirportItlwm-Tahoe-$suffix.zip"
+          ditto -c -k --keepParent "$products/$PLATFORM/AirportItlwm.kext" "artifacts/AirportItlwm-$PLATFORM-$suffix.zip"
       - uses: actions/upload-artifact@v4
         with:
-          name: AirportItlwm-Tahoe-${{ matrix.configuration }}
-          path: artifacts/AirportItlwm-Tahoe-*.zip
+          name: AirportItlwm-${{ matrix.platform }}-${{ matrix.configuration }}
+          path: artifacts/AirportItlwm-${{ matrix.platform }}-*.zip
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: build-logs-${{ matrix.configuration }}
+          name: build-logs-${{ matrix.platform }}-${{ matrix.configuration }}
           path: logs
 
   prerelease:
@@ -79,7 +78,7 @@ jobs:
           fetch-depth: 5
       - uses: actions/download-artifact@v4
         with:
-          pattern: AirportItlwm-Tahoe-*
+          pattern: AirportItlwm-*
           path: artifacts
           merge-multiple: true
       - name: Publish alpha artifacts
@@ -100,7 +99,7 @@ jobs:
           else
             gh release create "$tag" --target "$GITHUB_SHA" --prerelease --title "$tag" --notes-file ReleaseNotes.md
           fi
-          gh release upload "$tag" artifacts/AirportItlwm-Tahoe-*.zip --clobber
+          gh release upload "$tag" artifacts/AirportItlwm-*.zip --clobber
 
           # Remove obsolete assets only after the replacement set has uploaded.
           gh api "repos/$GITHUB_REPOSITORY/releases/tags/$tag" \

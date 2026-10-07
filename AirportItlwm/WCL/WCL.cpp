@@ -171,7 +171,11 @@ IOReturn AirportItlwmSkywalkInterface::setWCL_ASSOCIATE(apple80211AssocCandidate
     return _fCommandGate->runAction(wclCommand, this, reinterpret_cast<void *>(1), request);
 }
 
+#if __IO80211_TARGET == __MAC_15_2
+IOReturn AirportItlwmSkywalkInterface::setWCL_JOIN_ABORT(void *)
+#else
 IOReturn AirportItlwmSkywalkInterface::setWCL_JOIN_ABORT(apple80211_wcl_abort_join *)
+#endif
 {
     return _fCommandGate->runAction(wclCommand, this, reinterpret_cast<void *>(2));
 }
@@ -657,6 +661,16 @@ void AirportItlwmSkywalkInterface::handleWCLEvent(int code, void *data)
                 // WCL has no legacy LQMData instance at createLQMData().
                 // Send the snapshot consumed by WCL instead of legacy 227/229.
                 if (portAuthorized && (wclLqmBeacons % 8 == 0)) {
+#if __IO80211_TARGET == __MAC_15_2
+                    apple80211_rssi_data rssi = {};
+                    if (getRSSI(&rssi) == kIOReturnSuccess) {
+                        AirportWCL::SequoiaLqmUpdate update = {};
+                        update.rssiValid = 1;
+                        update.rssi = rssi.aggregate_rssi;
+                        instance->postMessage(this, AirportWCL::LqmUpdate,
+                            &update, sizeof(update), true);
+                    }
+#else
                     AirportWCL::LqmBeaconUpdate update;
                     if (AirportWCL::makeBeaconUpdate(
                             wclLqmBeacons - wclLqmReportedBeacons, update)) {
@@ -664,6 +678,7 @@ void AirportItlwmSkywalkInterface::handleWCLEvent(int code, void *data)
                             &update, sizeof(update), true);
                         wclLqmReportedBeacons = wclLqmBeacons;
                     }
+#endif
                 }
             }
             if (scanPending || joinPending || ic->ic_state == IEEE80211_S_SCAN ||
@@ -739,8 +754,23 @@ IOReturn AirportItlwmSkywalkInterface::setWCL_LINK_STATE_UPDATE(apple80211_wcl_u
 {
     if (!data)
         return kIOReturnBadArgument;
+#if __IO80211_TARGET == __MAC_15_2
+    const auto bytes = reinterpret_cast<const uint8_t *>(data);
+    if (bytes[6]) {
+        if (bytes[8])
+            setCurrentApAddress(reinterpret_cast<ether_addr *>(data));
+        if (bytes[7])
+            setLinkState(kIO80211NetworkLinkUp, 0, false, 0);
+    } else {
+        uint32_t debounce = AirportWCL::read32(bytes + 12);
+        setCurrentApAddress(nullptr);
+        setLinkState(kIO80211NetworkLinkDown, 0, debounce != 0, debounce);
+    }
+    return kIOReturnSuccess;
+#else
     IOReturn status = IO80211InfraInterface::setWCL_LINK_STATE_UPDATE(data);
     return status;
+#endif
 }
 
 IOReturn AirportItlwmSkywalkInterface::getWCL_BSS_INFO(apple80211_beacon_msg *data)
@@ -765,7 +795,11 @@ IOReturn AirportItlwmSkywalkInterface::copyWCLExtendedBss(void *data)
     static_assert(sizeof(apple80211_rate_set_data) == 0xbc, "Extended BSS rates size");
     static_assert(sizeof(apple80211_mcs_index_set_data) == 0x10, "Extended BSS MCS size");
     auto bytes = static_cast<uint8_t *>(data);
+#if __IO80211_TARGET == __MAC_15_2
+    bzero(bytes, 0x1e0);
+#else
     bzero(bytes, 0x214);
+#endif
     IOReturn status = getRATE_SET(reinterpret_cast<apple80211_rate_set_data *>(bytes));
     if (status)
         return status;
@@ -790,7 +824,11 @@ IOReturn AirportItlwmSkywalkInterface::copyWCLExtendedBss(void *data)
     memcpy(bytes + 0xd4, &heVersion, sizeof(heVersion));
     memcpy(bytes + 0xd8, &heMap, sizeof(heMap));
     if (ic->ic_flags & IEEE80211_F_RSNON)
+#if __IO80211_TARGET == __MAC_15_2
+        ieee80211_add_rsn(bytes + 0xdd, ic, ic->ic_bss);
+#else
         ieee80211_add_rsn(bytes + 0x113, ic, ic->ic_bss);
+#endif
     return kIOReturnSuccess;
 }
 

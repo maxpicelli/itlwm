@@ -1,3 +1,4 @@
+[![Version](https://img.shields.io/github/v/tag/maxpicelli/itlwm?style=flat&label=Downloads)](https://github.com/maxpicelli/itlwm/releases)
 # itlwm
 
 **An Intel Wi-Fi Adapter Kernel Extension for macOS, based on the OpenBSD Project.**
@@ -10,10 +11,28 @@ We highly recommend exploring our documentation before using this Kernel Extensi
 - [Compatibility](https://openintelwireless.github.io/itlwm/Compat)
 - [FAQ](https://openintelwireless.github.io/itlwm/FAQ)
 
+## AirportItlwm no macOS Sequoia
+
+O alvo `AirportItlwm-Sequoia` oferece suporte ao macOS Sequoia 15.2 ou posterior
+em computadores `x86_64`, usando a interface Wi-Fi nativa do macOS. O Sequoia e
+o Tahoe usam cabeçalhos ABI e produtos de compilação separados.
+
+Com a mesma revisão do MacKernelSDK indicada abaixo, compile com:
+
+```sh
+xcodebuild -project itlwm.xcodeproj -scheme AirportItlwm-Sequoia \
+  -configuration Release ARCHS=x86_64 CODE_SIGNING_ALLOWED=NO build
+```
+
+Use essa kext somente no Darwin 24.2.0 a 24.99.99. Se o OpenCore for usado nos
+dois sistemas, mantenha a kext do Tahoe restrita ao Darwin 25.x. O HE continua
+opcional com `itlwm_he=1`, e as limitações abaixo também se aplicam ao Sequoia.
+
 ## AirportItlwm no macOS 26 Tahoe
 
 Este fork oferece suporte experimental ao macOS Tahoe 26.x em computadores
-`x86_64`, usando a interface Wi-Fi nativa do macOS.
+`x86_64`, usando a interface Wi-Fi nativa do macOS, incluindo busca, conexão,
+troca de redes e endereços Wi-Fi privados.
 
 - O Wi-Fi 6 (802.11ax/HE) vem desativado por padrão. Adicione `itlwm_he=1` aos
   argumentos de inicialização para ativá-lo em adaptadores compatíveis.
@@ -112,10 +131,6 @@ pasta semelhante a:
 ```text
 ~/Library/Developer/Xcode/DerivedData/itlwm-*/Build/Products/Release/Tahoe/AirportItlwm.kext
 ```
-
-## Download
-
-[![Download from https://github.com/OpenIntelWireless/itlwm/releases](https://img.shields.io/github/v/release/OpenIntelWireless/itlwm?label=Download)](https://github.com/OpenIntelWireless/itlwm/releases)
 
 ## Questions and Issues
 

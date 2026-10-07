@@ -32,12 +32,14 @@ public:
     IOReturn getFW_CLOCK_INFO(apple80211_fw_clock_info*) override { return kIOReturnUnsupported; }
     IOReturn getTIMESYNC_STATS(apple80211_timesync_stats*) override { return kIOReturnUnsupported; }
     IOReturn getSYSTEM_SLEEP_CONFIG(apple80211_system_sleep_config*) override { return kIOReturnUnsupported; }
+#if __IO80211_TARGET != __MAC_15_2
     IOReturn getSMARTCCA_OPMODE(apple80211_smartcca_opmode*) override { return kIOReturnUnsupported; }
     IOReturn getLQM_STATISTICS(apple80211_lqm_statistics*) override { return kIOReturnUnsupported; }
     IOReturn getDEVICE_ORIENTATION(apple80211_device_orientation*) override { return kIOReturnUnsupported; }
     IOReturn getACCESSORY_STATE(apple80211_device_accessory_info*) override { return kIOReturnUnsupported; }
     IOReturn getP2P_DEVICE_CAPABILITY(apple80211_p2p_device_capability*) override { return kIOReturnUnsupported; }
     IOReturn getPOWERTABLE_VERSION(apple80211_powertable_version_data*) override { return kIOReturnUnsupported; }
+#endif
     IOReturn setCLEAR_PMKSA_CACHE(void*) override;
     IOReturn setDYNAMIC_RSSI_WINDOW_CONFIG(apple80211_dynamic_rssi_window_config*) override { return kIOReturnUnsupported; }
     IOReturn setBSS_BLACKLIST(bss_blacklist*) override { return kIOReturnUnsupported; }
@@ -88,6 +90,7 @@ public:
     IOReturn setNDD_REQ(apple80211_ndd_data*) override { return kIOReturnUnsupported; }
     IOReturn setDBRG_ENTROPY(apple80211_drbg_entropy*) override { return kIOReturnUnsupported; }
     IOReturn setSDB_ENABLE(apple80211_sdb_enable*) override { return kIOReturnUnsupported; }
+#if __IO80211_TARGET != __MAC_15_2
     IOReturn setBTCOEX_EXT_PROFILE(apple80211_btcoex_ext_profile*) override { return kIOReturnUnsupported; }
     IOReturn setDEVICE_ORIENTATION(apple80211_device_orientation*) override { return kIOReturnUnsupported; }
     IOReturn setACCESSORY_STATE(apple80211_device_accessory_info*) override { return kIOReturnUnsupported; }
@@ -95,10 +98,18 @@ public:
     IOReturn setTX_MODE_CONFIG(apple80211_tx_mode_config*) override { return kIOReturnUnsupported; }
     IOReturn setMITIGATE_INTERFERENCE(apple80211_mitigate_interference*) override { return kIOReturnUnsupported; }
     IOReturn setMacAddress(mloAddrArray &) override;
+#endif
     IOReturn getROAM_PROFILE(apple80211_roam_profile_all_bands *) override { return kIOReturnUnsupported; }
     IOReturn setROAM_PROFILE(apple80211_roam_profile_all_bands *) override { return kIOReturnUnsupported; }
+#if __IO80211_TARGET != __MAC_15_2
     IOReturn setWCL_JOIN_ABORT(apple80211_wcl_abort_join *) override;
+#endif
     IOReturn setWCL_ASSOCIATE(apple80211AssocCandidates *) override;
+#if __IO80211_TARGET == __MAC_15_2
+    IOReturn setMacAddress(ether_addr &) override;
+    IOReturn getWIFI_BT_5G_POLICY(apple80211_wifi_bt_5g_policy_t *) override { return kIOReturnUnsupported; }
+    IOReturn setWIFI_BT_5G_POLICY(apple80211_wifi_bt_5g_policy_t *) override { return kIOReturnUnsupported; }
+#endif
 #endif
 
     virtual bool init(IOService *) AIRPORT_SKYWALK_OVERRIDE;
@@ -352,7 +363,11 @@ public:
 #endif
     virtual IOReturn setWCL_REAL_TIME_MODE(apple80211_wcl_real_time_mode *) AIRPORT_SKYWALK_OVERRIDE { return kIOReturnUnsupported; }
     virtual IOReturn setWCL_GARP_MODE(apple80211_wcl_garp_mode *) AIRPORT_SKYWALK_OVERRIDE { return kIOReturnUnsupported; }
+#if defined(AIRPORT_WCL) && __IO80211_TARGET == __MAC_15_2
+    IOReturn setWCL_JOIN_ABORT(void *) override;
+#else
     virtual IOReturn setWCL_JOIN_ABORT(void *) AIRPORT_SKYWALK_OVERRIDE { return kIOReturnUnsupported; }
+#endif
     virtual IOReturn setWCL_TRIGGER_CC(triggerCC *) AIRPORT_SKYWALK_OVERRIDE { return kIOReturnUnsupported; }
 #ifdef AIRPORT_WCL
     IOReturn setWCL_SCAN_REQ(apple80211ScanRequest *) override;
@@ -420,7 +435,7 @@ private:
     bool scanSkipCompletion;
     bool wclBssValid;
     bool wclLinkIndicated;
-    uint8_t wclBssInfo[0x844];
+    uint8_t wclBssInfo[sizeof(AirportWCL::BeaconMetadata) + 0x800];
     uint8_t wclBeaconInfo[0x808] = {};
     uint32_t wclAssociatedBeacons = 0;
     uint32_t wclLqmBeacons = 0;

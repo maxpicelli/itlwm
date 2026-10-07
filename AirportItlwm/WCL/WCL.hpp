@@ -68,6 +68,15 @@ enum Message : uint32_t {
     ScanDone = 237
 };
 
+struct SequoiaLqmUpdate {
+    uint8_t rssiValid;
+    uint8_t reserved0[3];
+    int32_t rssi;
+    uint8_t reserved1[0x150 - 8];
+};
+static_assert(sizeof(SequoiaLqmUpdate) == 0x150, "Sequoia LQM size");
+static_assert(offsetof(SequoiaLqmUpdate, rssi) == 4, "Sequoia LQM RSSI offset");
+
 // WCLNetManager::handleLqmUpdate consumes this 0x1dc snapshot.
 // Only beacon reception is valid; unavailable radio measurements stay invalid.
 struct LqmBeaconUpdate {
@@ -120,7 +129,9 @@ struct BeaconMetadata {
     int16_t snr;
     uint16_t interval;
     uint16_t capability;
+#if !defined(__IO80211_TARGET) || __IO80211_TARGET != __MAC_15_2
     uint32_t reserved2;
+#endif
     uint32_t flags;
 };
 
@@ -187,7 +198,13 @@ struct __attribute__((packed)) ChannelInfo {
     uint8_t supports6GHz;
 };
 
+#if defined(__IO80211_TARGET) && __IO80211_TARGET == __MAC_15_2
+static_assert(sizeof(BeaconMetadata) == 0x40, "Sequoia BeaconMetadata size");
+static_assert(offsetof(BeaconMetadata, flags) == 0x3c, "Sequoia BeaconMetadata flags");
+#else
 static_assert(sizeof(BeaconMetadata) == 0x44, "BeaconMetadata size");
+static_assert(offsetof(BeaconMetadata, flags) == 0x40, "BeaconMetadata flags");
+#endif
 static_assert(offsetof(BeaconMetadata, bssid) == 0x29, "BeaconMetadata BSSID");
 static_assert(offsetof(BeaconMetadata, rssi) == 0x30, "BeaconMetadata RSSI");
 static_assert(sizeof(AssociationEvent) == 0x1c, "AssociationEvent size");

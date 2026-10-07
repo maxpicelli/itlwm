@@ -7,7 +7,11 @@
 //
 
 #ifdef AIRPORT_WCL
+#if __IO80211_TARGET == __MAC_15_2
+#include "macOS15/IOSkywalkInterface.h"
+#else
 #include "macOS26/IOSkywalkInterface.h"
+#endif
 #else
 #ifndef IOSkywalkInterface_h
 #define IOSkywalkInterface_h

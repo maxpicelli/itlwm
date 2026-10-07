@@ -1056,10 +1056,17 @@ IOReturn AirportItlwmSkywalkInterface::getHW_ADDR(apple80211_hw_mac_address *dat
     return kIOReturnSuccess;
 }
 
+#if __IO80211_TARGET == __MAC_15_2
+IOReturn AirportItlwmSkywalkInterface::setMacAddress(ether_addr &address)
+{
+    return instance->setHardwareAddress(&address, IEEE80211_ADDR_LEN);
+}
+#else
 IOReturn AirportItlwmSkywalkInterface::setMacAddress(mloAddrArray &addresses)
 {
     return instance->setHardwareAddress(&addresses, IEEE80211_ADDR_LEN);
 }
+#endif
 
 #endif
 
